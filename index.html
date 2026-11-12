@@ -1,0 +1,444 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEXATECH Shopping Cart</title>
+
+<style>
+body {
+  background: #0b1020;
+  color: white;
+  font-family: Arial, sans-serif;
+  padding: 20px;
+  margin: 0;
+}
+
+.container {
+  max-width: 750px;
+  margin: auto;
+}
+
+h1 {
+  color: #65a5ff;
+}
+
+.card {
+  background: #141d32;
+  border: 1px solid #263653;
+  border-radius: 14px;
+  padding: 20px;
+  margin: 15px 0;
+}
+
+.code {
+  color: #79adff;
+  font-size: 13px;
+}
+
+.price {
+  font-size: 24px;
+  font-weight: bold;
+  margin: 12px 0;
+}
+
+button {
+  background: #2f80ed;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 16px;
+  cursor: pointer;
+  font-weight: bold;
+  margin: 4px;
+}
+
+.secondary {
+  background: #263653;
+}
+
+.remove {
+  background: #a83245;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.item {
+  border-bottom: 1px solid #263653;
+  padding: 15px 0;
+}
+
+.total {
+  font-size: 25px;
+  font-weight: bold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+<h1>NEXATECH</h1>
+<div id="app"></div>
+</div>
+
+<script>
+
+// 1. PRODUCTOS
+
+const PRODUCTS = {
+
+"PRODUCT-001": {
+name: "Gaming Laptop MSI Cyborg 15",
+price: 800
+},
+
+"PRODUCT-002": {
+name: "iPhone 18 Pro Max",
+price: 1299
+},
+
+"PRODUCT-003": {
+name: "AirPods Max 2",
+price: 300
+},
+
+"PRODUCT-004": {
+name: "Samsung 75-inch Mini LED UHD 4K",
+price: 600
+},
+
+"PRODUCT-005": {
+name: "PlayStation 5 Pro 2TB",
+price: 900
+},
+
+"PRODUCT-006": {
+name: "Staren 3MP WiFi Security Camera",
+price: 100
+}
+
+};
+
+
+// 2. CONFIGURACION DEL CARRITO
+
+const CART_KEY = "nexatech_cart_v1";
+
+function getCart() {
+try {
+return JSON.parse(
+localStorage.getItem(CART_KEY) || "{}"
+);
+} catch(error) {
+return {};
+}
+}
+
+function saveCart(cart) {
+localStorage.setItem(
+CART_KEY,
+JSON.stringify(cart)
+);
+}
+
+function money(amount) {
+return "$" +
+Number(amount).toLocaleString("en-US", {
+minimumFractionDigits: 2,
+maximumFractionDigits: 2
+}) + " USD";
+}
+
+function cartCount(cart) {
+return Object.values(cart).reduce(
+(total, quantity) => total + quantity, 0
+);
+}
+
+
+// 3. AGREGAR PRODUCTOS
+
+function addToCart(id) {
+
+if (!PRODUCTS[id]) return;
+
+const cart = getCart();
+
+cart[id] = (cart[id] || 0) + 1;
+
+saveCart(cart);
+
+renderProduct(id, true);
+
+}
+
+
+// 4. CAMBIAR CANTIDADES
+
+function changeQuantity(id, amount) {
+
+const cart = getCart();
+
+cart[id] = (cart[id] || 0) + amount;
+
+if (cart[id] <= 0) {
+delete cart[id];
+}
+
+saveCart(cart);
+
+renderCart();
+
+}
+
+
+// 5. ELIMINAR PRODUCTOS
+
+function removeProduct(id) {
+
+const cart = getCart();
+
+delete cart[id];
+
+saveCart(cart);
+
+renderCart();
+
+}
+
+
+// 6. MOSTRAR PRODUCTO
+
+function renderProduct(id, added = false) {
+
+const product = PRODUCTS[id];
+
+if (!product) return;
+
+const cart = getCart();
+
+document.getElementById("app").innerHTML = `
+
+<div class="card">
+
+<div class="code">${id}</div>
+
+<h2>${product.name}</h2>
+
+<div class="price">
+${money(product.price)}
+</div>
+
+<button onclick="addToCart('${id}')">
+ADD TO CART
+</button>
+
+<button class="secondary"
+onclick="goToCart()">
+VIEW CART (${cartCount(cart)})
+</button>
+
+${added ? "<p>¡Producto agregado!</p>" : ""}
+
+</div>
+
+`;
+
+}
+
+
+// 7. ABRIR CARRITO
+
+function goToCart() {
+
+const url = new URL(window.location.href);
+
+url.search = "?cart=1";
+
+window.location.href = url.href;
+
+}
+
+
+// 8. MOSTRAR CARRITO
+
+function renderCart() {
+
+const cart = getCart();
+
+const ids = Object.keys(cart).filter(
+id => PRODUCTS[id] && cart[id] > 0
+);
+
+let total = 0;
+
+let productsHTML = "";
+
+ids.forEach(id => {
+
+const product = PRODUCTS[id];
+
+const quantity = cart[id];
+
+const subtotal = product.price * quantity;
+
+total += subtotal;
+
+productsHTML += `
+
+<div class="item">
+
+<div class="row">
+
+<div>
+<div class="code">${id}</div>
+<strong>${product.name}</strong>
+<p>${money(product.price)} cada uno</p>
+</div>
+
+<div>
+
+<button class="secondary"
+onclick="changeQuantity('${id}',-1)">
+−
+</button>
+
+<strong>${quantity}</strong>
+
+<button onclick="changeQuantity('${id}',1)">
++
+</button>
+
+</div>
+
+<strong>${money(subtotal)}</strong>
+
+<button class="remove"
+onclick="removeProduct('${id}')">
+REMOVE
+</button>
+
+</div>
+
+</div>
+
+`;
+
+});
+
+document.getElementById("app").innerHTML = `
+
+<h2>SHOPPING CART</h2>
+
+<div class="card">
+
+${ids.length ? productsHTML :
+"<p>Tu carrito está vacío.</p>"}
+
+<hr>
+
+<div class="row">
+<strong>TOTAL:</strong>
+<div class="total">${money(total)}</div>
+</div>
+
+<button class="secondary"
+onclick="history.back()">
+CONTINUE SHOPPING
+</button>
+
+<button onclick="checkout()"
+${ids.length ? "" : "disabled"}>
+CHECKOUT
+</button>
+
+</div>
+
+`;
+
+}
+
+
+// 9. CHECKOUT
+
+function checkout() {
+
+const cart = getCart();
+
+const ids = Object.keys(cart).filter(
+id => PRODUCTS[id] && cart[id] > 0
+);
+
+if (!ids.length) return;
+
+const order = ids.map(id => {
+
+const product = PRODUCTS[id];
+
+return (
+id + " - " +
+product.name +
+" - Cantidad: " + cart[id] +
+" - Subtotal: " +
+money(product.price * cart[id])
+);
+
+}).join("\n");
+
+const total = ids.reduce(
+(sum, id) =>
+sum + PRODUCTS[id].price * cart[id],
+0
+);
+
+const FORM_URL =
+"PEGA_AQUI_TU_ENLACE_DE_GOOGLE_FORMS";
+
+if (FORM_URL.startsWith("https://")) {
+
+window.open(FORM_URL, "_blank");
+
+} else {
+
+alert(
+"PEDIDO NEXATECH:\n\n" +
+order +
+"\n\nTOTAL: " + money(total) +
+"\n\nFalta configurar Google Forms."
+);
+
+}
+
+}
+
+
+// 10. INICIAR APLICACION
+
+const params = new URLSearchParams(
+window.location.search
+);
+
+if (params.get("cart") === "1") {
+
+renderCart();
+
+} else {
+
+renderProduct(
+params.get("product") || "PRODUCT-001"
+);
+
+}
+
+</script>
+
+</body>
+</html>
