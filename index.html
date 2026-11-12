@@ -1,444 +1,504 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NEXATECH Shopping Cart</title>
+<title>NEXATECH | Shopping Cart</title>
 
 <style>
+* { box-sizing: border-box; }
+
 body {
-  background: #0b1020;
-  color: white;
-  font-family: Arial, sans-serif;
-  padding: 20px;
   margin: 0;
-}
-
-.container {
-  max-width: 750px;
-  margin: auto;
-}
-
-h1 {
-  color: #65a5ff;
-}
-
-.card {
-  background: #141d32;
-  border: 1px solid #263653;
-  border-radius: 14px;
   padding: 20px;
-  margin: 15px 0;
+  font-family: Arial, sans-serif;
+  background: #071426;
+  color: white;
 }
 
-.code {
-  color: #79adff;
-  font-size: 13px;
+header {
+  max-width: 1000px;
+  margin: auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
-.price {
-  font-size: 24px;
-  font-weight: bold;
-  margin: 12px 0;
-}
+h1 { color: #42c8f5; }
 
 button {
-  background: #2f80ed;
-  color: white;
-  border: none;
-  border-radius: 8px;
+  border: 0;
+  border-radius: 9px;
   padding: 12px 16px;
   cursor: pointer;
   font-weight: bold;
   margin: 4px;
 }
 
+.add {
+  background: #36c5d9;
+  color: #061421;
+}
+
+.cart-button {
+  background: #2464a8;
+  color: white;
+}
+
 .secondary {
-  background: #263653;
+  background: #263c56;
+  color: white;
 }
 
 .remove {
   background: #a83245;
+  color: white;
 }
 
-.row {
+main {
+  max-width: 1000px;
+  margin: 25px auto;
+}
+
+.products {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 18px;
+}
+
+.card, .cart-box {
+  background: #142c49;
+  border: 1px solid #315477;
+  border-radius: 16px;
+  padding: 20px;
+}
+
+.product-icon {
+  font-size: 55px;
+  text-align: center;
+  padding: 20px;
+}
+
+.code {
+  color: #5bd4ed;
+  font-size: 13px;
+}
+
+.price {
+  font-size: 23px;
+  font-weight: bold;
+  color: #ffe18a;
+}
+
+.cart-line {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
   flex-wrap: wrap;
-  gap: 10px;
-}
-
-.item {
-  border-bottom: 1px solid #263653;
   padding: 15px 0;
+  border-bottom: 1px solid #38506b;
 }
 
 .total {
   font-size: 25px;
+  color: #ffe18a;
   font-weight: bold;
+}
+
+.hidden { display: none; }
+
+a { color: #65d8fa; }
+
+footer {
+  text-align: center;
+  color: #9bb1c8;
+  margin: 35px 0;
 }
 </style>
 </head>
 
 <body>
 
-<div class="container">
-<h1>NEXATECH</h1>
-<div id="app"></div>
-</div>
+<header>
+  <h1>NEXATECH</h1>
+  <button class="cart-button" onclick="openCart()">
+    🛒 SHOPPING CART (<span id="cartCount">0</span>)
+  </button>
+</header>
+
+<main>
+
+  <section id="catalog">
+    <h2>Our Technology Products</h2>
+    <div class="products" id="productList"></div>
+  </section>
+
+  <section id="singleProduct" class="hidden">
+    <div id="singleProductContent"></div>
+    <button class="secondary" onclick="showCatalog()">
+      BACK TO PRODUCTS
+    </button>
+  </section>
+
+  <section id="shoppingCart" class="hidden">
+    <div class="cart-box">
+      <h2>🛒 YOUR SHOPPING CART</h2>
+      <div id="cartItems"></div>
+      <hr>
+      <p id="subtotal"></p>
+      <p id="total" class="total"></p>
+
+      <button class="secondary" onclick="showCatalog()">
+        CONTINUE SHOPPING
+      </button>
+
+      <button class="add" onclick="checkout()">
+        PROCEED TO CHECKOUT
+      </button>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  NEXATECH © 2026 | Online Technology Store
+</footer>
 
 <script>
 
-// 1. PRODUCTOS
+// =================================
+// 1. PRODUCT DATABASE
+// =================================
 
-const PRODUCTS = {
+const products = [
+  {
+    id: "PRODUCT-001",
+    name: "Gaming Laptop MSI Cyborg 15",
+    price: 800,
+    icon: "💻"
+  },
+  {
+    id: "PRODUCT-002",
+    name: "iPhone 18 Pro Max",
+    price: null,
+    icon: "📱"
+  },
+  {
+    id: "PRODUCT-003",
+    name: "AirPods Max 2",
+    price: null,
+    icon: "🎧"
+  },
+  {
+    id: "PRODUCT-004",
+    name: "Samsung 75-inch Mini LED UHD 4K",
+    price: null,
+    icon: "📺"
+  },
+  {
+    id: "PRODUCT-005",
+    name: "PlayStation 5 Pro 2TB",
+    price: null,
+    icon: "🎮"
+  },
+  {
+    id: "PRODUCT-006",
+    name: "Staren 3MP WiFi Security Camera",
+    price: null,
+    icon: "📷"
+  }
+];
 
-"PRODUCT-001": {
-name: "Gaming Laptop MSI Cyborg 15",
-price: 800
-},
+// =================================
+// 2. SHARED SHOPPING CART
+// =================================
 
-"PRODUCT-002": {
-name: "iPhone 18 Pro Max",
-price: 1299
-},
-
-"PRODUCT-003": {
-name: "AirPods Max 2",
-price: 300
-},
-
-"PRODUCT-004": {
-name: "Samsung 75-inch Mini LED UHD 4K",
-price: 600
-},
-
-"PRODUCT-005": {
-name: "PlayStation 5 Pro 2TB",
-price: 900
-},
-
-"PRODUCT-006": {
-name: "Staren 3MP WiFi Security Camera",
-price: 100
-}
-
-};
-
-
-// 2. CONFIGURACION DEL CARRITO
-
-const CART_KEY = "nexatech_cart_v1";
+const STORAGE_KEY = "NEXATECH_SHARED_CART_V1";
 
 function getCart() {
-try {
-return JSON.parse(
-localStorage.getItem(CART_KEY) || "{}"
-);
-} catch(error) {
-return {};
-}
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+  } catch (error) {
+    return {};
+  }
 }
 
 function saveCart(cart) {
-localStorage.setItem(
-CART_KEY,
-JSON.stringify(cart)
-);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(cart));
+  updateCartCount();
 }
 
-function money(amount) {
-return "$" +
-Number(amount).toLocaleString("en-US", {
-minimumFractionDigits: 2,
-maximumFractionDigits: 2
-}) + " USD";
+// =================================
+// 3. ADD PRODUCT TO CART
+// =================================
+
+function addToCart(productId) {
+  const product = products.find(p => p.id === productId);
+
+  if (!product) return;
+
+  if (product.price === null) {
+    alert("El precio de este producto todavía está pendiente de confirmar.");
+    return;
+  }
+
+  const cart = getCart();
+
+  if (cart[productId]) {
+    cart[productId].quantity += 1;
+  } else {
+    cart[productId] = {
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      quantity: 1
+    };
+  }
+
+  saveCart(cart);
+  alert(product.name + " agregado al carrito.");
 }
 
-function cartCount(cart) {
-return Object.values(cart).reduce(
-(total, quantity) => total + quantity, 0
-);
+// =================================
+// 4. CART COUNTER
+// =================================
+
+function updateCartCount() {
+  const cart = getCart();
+
+  const count = Object.values(cart).reduce(
+    (sum, item) => sum + item.quantity,
+    0
+  );
+
+  document.getElementById("cartCount").textContent = count;
 }
 
+// =================================
+// 5. SHOW ALL PRODUCTS
+// =================================
 
-// 3. AGREGAR PRODUCTOS
+function renderCatalog() {
+  const container = document.getElementById("productList");
 
-function addToCart(id) {
+  container.innerHTML = products.map(product => `
+    <article class="card">
+      <div class="product-icon">${product.icon}</div>
 
-if (!PRODUCTS[id]) return;
+      <p class="code">${product.id}</p>
 
-const cart = getCart();
+      <h3>${product.name}</h3>
 
-cart[id] = (cart[id] || 0) + 1;
+      <p class="price">
+        ${product.price === null
+          ? "Price pending confirmation"
+          : "$" + product.price.toFixed(2) + " USD"}
+      </p>
 
-saveCart(cart);
+      <button class="add"
+        onclick="addToCart('${product.id}')">
+        ADD TO CART
+      </button>
 
-renderProduct(id, true);
-
+      <button class="secondary"
+        onclick="openProduct('${product.id}')">
+        VIEW PRODUCT
+      </button>
+    </article>
+  `).join("");
 }
 
+// =================================
+// 6. SHOW INDIVIDUAL PRODUCT
+// =================================
 
-// 4. CAMBIAR CANTIDADES
+function openProduct(productId) {
+  const product = products.find(p => p.id === productId);
 
-function changeQuantity(id, amount) {
+  if (!product) {
+    showCatalog();
+    return;
+  }
 
-const cart = getCart();
+  document.getElementById("catalog").classList.add("hidden");
+  document.getElementById("shoppingCart").classList.add("hidden");
+  document.getElementById("singleProduct").classList.remove("hidden");
 
-cart[id] = (cart[id] || 0) + amount;
+  document.getElementById("singleProductContent").innerHTML = `
+    <div class="card">
+      <div class="product-icon">${product.icon}</div>
 
-if (cart[id] <= 0) {
-delete cart[id];
+      <p class="code">${product.id}</p>
+
+      <h2>${product.name}</h2>
+
+      <p class="price">
+        ${product.price === null
+          ? "Price pending confirmation"
+          : "$" + product.price.toFixed(2) + " USD"}
+      </p>
+
+      <button class="add"
+        onclick="addToCart('${product.id}')">
+        ADD TO CART
+      </button>
+
+      <button class="cart-button" onclick="openCart()">
+        VIEW CART
+      </button>
+    </div>
+  `;
 }
 
-saveCart(cart);
+// =================================
+// 7. SHOW SHOPPING CART
+// =================================
 
-renderCart();
+function openCart() {
+  document.getElementById("catalog").classList.add("hidden");
+  document.getElementById("singleProduct").classList.add("hidden");
+  document.getElementById("shoppingCart").classList.remove("hidden");
 
+  renderCart();
 }
-
-
-// 5. ELIMINAR PRODUCTOS
-
-function removeProduct(id) {
-
-const cart = getCart();
-
-delete cart[id];
-
-saveCart(cart);
-
-renderCart();
-
-}
-
-
-// 6. MOSTRAR PRODUCTO
-
-function renderProduct(id, added = false) {
-
-const product = PRODUCTS[id];
-
-if (!product) return;
-
-const cart = getCart();
-
-document.getElementById("app").innerHTML = `
-
-<div class="card">
-
-<div class="code">${id}</div>
-
-<h2>${product.name}</h2>
-
-<div class="price">
-${money(product.price)}
-</div>
-
-<button onclick="addToCart('${id}')">
-ADD TO CART
-</button>
-
-<button class="secondary"
-onclick="goToCart()">
-VIEW CART (${cartCount(cart)})
-</button>
-
-${added ? "<p>¡Producto agregado!</p>" : ""}
-
-</div>
-
-`;
-
-}
-
-
-// 7. ABRIR CARRITO
-
-function goToCart() {
-
-const url = new URL(window.location.href);
-
-url.search = "?cart=1";
-
-window.location.href = url.href;
-
-}
-
-
-// 8. MOSTRAR CARRITO
 
 function renderCart() {
+  const cart = getCart();
+  const container = document.getElementById("cartItems");
 
-const cart = getCart();
+  const items = Object.values(cart);
 
-const ids = Object.keys(cart).filter(
-id => PRODUCTS[id] && cart[id] > 0
-);
+  if (items.length === 0) {
+    container.innerHTML = "<p>Your cart is empty.</p>";
+  } else {
+    container.innerHTML = items.map(item => `
+      <div class="cart-line">
+        <div>
+          <strong>${item.name}</strong>
+          <p>${item.id}</p>
+          <p>$${item.price.toFixed(2)} USD each</p>
+          <p>Subtotal: $${(item.price * item.quantity).toFixed(2)}</p>
+        </div>
 
-let total = 0;
+        <div>
+          <button class="secondary"
+            onclick="changeQuantity('${item.id}', -1)">−</button>
 
-let productsHTML = "";
+          <strong>${item.quantity}</strong>
 
-ids.forEach(id => {
+          <button class="secondary"
+            onclick="changeQuantity('${item.id}', 1)">+</button>
 
-const product = PRODUCTS[id];
+          <button class="remove"
+            onclick="removeItem('${item.id}')">REMOVE</button>
+        </div>
+      </div>
+    `).join("");
+  }
 
-const quantity = cart[id];
+  const total = items.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
 
-const subtotal = product.price * quantity;
+  document.getElementById("subtotal").textContent =
+    "Subtotal: $" + total.toFixed(2) + " USD";
 
-total += subtotal;
-
-productsHTML += `
-
-<div class="item">
-
-<div class="row">
-
-<div>
-<div class="code">${id}</div>
-<strong>${product.name}</strong>
-<p>${money(product.price)} cada uno</p>
-</div>
-
-<div>
-
-<button class="secondary"
-onclick="changeQuantity('${id}',-1)">
-−
-</button>
-
-<strong>${quantity}</strong>
-
-<button onclick="changeQuantity('${id}',1)">
-+
-</button>
-
-</div>
-
-<strong>${money(subtotal)}</strong>
-
-<button class="remove"
-onclick="removeProduct('${id}')">
-REMOVE
-</button>
-
-</div>
-
-</div>
-
-`;
-
-});
-
-document.getElementById("app").innerHTML = `
-
-<h2>SHOPPING CART</h2>
-
-<div class="card">
-
-${ids.length ? productsHTML :
-"<p>Tu carrito está vacío.</p>"}
-
-<hr>
-
-<div class="row">
-<strong>TOTAL:</strong>
-<div class="total">${money(total)}</div>
-</div>
-
-<button class="secondary"
-onclick="history.back()">
-CONTINUE SHOPPING
-</button>
-
-<button onclick="checkout()"
-${ids.length ? "" : "disabled"}>
-CHECKOUT
-</button>
-
-</div>
-
-`;
-
+  document.getElementById("total").textContent =
+    "TOTAL: $" + total.toFixed(2) + " USD";
 }
 
+// =================================
+// 8. CHANGE QUANTITY
+// =================================
 
-// 9. CHECKOUT
+function changeQuantity(productId, amount) {
+  const cart = getCart();
+
+  if (!cart[productId]) return;
+
+  cart[productId].quantity += amount;
+
+  if (cart[productId].quantity <= 0) {
+    delete cart[productId];
+  }
+
+  saveCart(cart);
+  renderCart();
+}
+
+// =================================
+// 9. REMOVE PRODUCT
+// =================================
+
+function removeItem(productId) {
+  const cart = getCart();
+
+  delete cart[productId];
+
+  saveCart(cart);
+  renderCart();
+}
+
+// =================================
+// 10. NAVIGATION
+// =================================
+
+function showCatalog() {
+  document.getElementById("catalog").classList.remove("hidden");
+  document.getElementById("singleProduct").classList.add("hidden");
+  document.getElementById("shoppingCart").classList.add("hidden");
+}
+
+// =================================
+// 11. CHECKOUT
+// =================================
+
+// Add your real Google Forms URL here.
+const GOOGLE_FORM_URL = "";
 
 function checkout() {
+  const cart = getCart();
 
-const cart = getCart();
+  if (Object.keys(cart).length === 0) {
+    alert("Your shopping cart is empty.");
+    return;
+  }
 
-const ids = Object.keys(cart).filter(
-id => PRODUCTS[id] && cart[id] > 0
-);
+  if (!GOOGLE_FORM_URL) {
+    alert("Your cart is ready. Add your Google Forms URL to the code to activate Checkout.");
+    return;
+  }
 
-if (!ids.length) return;
-
-const order = ids.map(id => {
-
-const product = PRODUCTS[id];
-
-return (
-id + " - " +
-product.name +
-" - Cantidad: " + cart[id] +
-" - Subtotal: " +
-money(product.price * cart[id])
-);
-
-}).join("\n");
-
-const total = ids.reduce(
-(sum, id) =>
-sum + PRODUCTS[id].price * cart[id],
-0
-);
-
-const FORM_URL =
-"PEGA_AQUI_TU_ENLACE_DE_GOOGLE_FORMS";
-
-if (FORM_URL.startsWith("https://")) {
-
-window.open(FORM_URL, "_blank");
-
-} else {
-
-alert(
-"PEDIDO NEXATECH:\n\n" +
-order +
-"\n\nTOTAL: " + money(total) +
-"\n\nFalta configurar Google Forms."
-);
-
+  window.open(GOOGLE_FORM_URL, "_blank");
 }
 
+// =================================
+// 12. INITIALIZE PAGE
+// =================================
+
+function initialize() {
+  renderCatalog();
+  updateCartCount();
+
+  const params = new URLSearchParams(window.location.search);
+
+  const productId = params.get("product");
+
+  if (params.get("cart") === "1") {
+    openCart();
+  } else if (productId) {
+    openProduct(productId);
+  } else {
+    showCatalog();
+  }
 }
 
-
-// 10. INICIAR APLICACION
-
-const params = new URLSearchParams(
-window.location.search
-);
-
-if (params.get("cart") === "1") {
-
-renderCart();
-
-} else {
-
-renderProduct(
-params.get("product") || "PRODUCT-001"
-);
-
-}
+initialize();
 
 </script>
-
 </body>
 </html>
